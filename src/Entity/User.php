@@ -10,7 +10,7 @@ use Symfony\Component\Serializer\Annotation\Groups;
 use Symfony\Component\Validator\Constraints as Assert;
 
 #[ORM\Entity(repositoryClass: UserRepository::class)]
-#[UniqueEntity('email', 'username')]
+#[UniqueEntity( fields: ['email', 'username'])]
 class User
 {
     #[ORM\Id]

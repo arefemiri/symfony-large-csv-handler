@@ -6,6 +6,7 @@ use App\Entity\User;
 use App\Service\CSVImportManager;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
+use Symfony\Component\HttpFoundation\File\UploadedFile;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Annotation\Route;
@@ -57,29 +58,30 @@ class EmployeeController extends AbstractController
     #[Route('', name: 'app_employee_import', methods: ['POST'])]
     public function import(CSVImportManager $CSVImportManager, Request $request): Response
     {
-        $uploadedFile = $request->files->get('file');
+        ini_set('memory_limit', '2048M');
+        $uploadedFiles = $request->files->all();
+        foreach ($uploadedFiles as $uploadedFile) {
+            // Check if $uploadedFile is indeed an uploaded file
+            if ($uploadedFile instanceof UploadedFile) {
 
-        // Check if a file was uploaded
-        if (!$uploadedFile) {
-            return $this->json(['message' => 'No file uploaded.'], Response::HTTP_BAD_REQUEST);
+                // Check if the uploaded file is a CSV
+                if ($uploadedFile->getClientOriginalExtension() !== 'csv') {
+                    return $this->json(['message' => 'Invalid file format. Only CSV files are allowed.'], Response::HTTP_BAD_REQUEST);
+                }
+
+                $filePath = $uploadedFile->getPathname();
+                $chunkSize = 1024 * 1024; // 1MB chunk size
+                $batchSize = 50; // Adjust the batch size as needed
+
+
+                // Call the CSV import manager to handle the import
+                $importResult = $CSVImportManager->importCSV($filePath, $chunkSize, $batchSize);
+
+                if ($importResult === false) {
+                    return $this->json(['message' => 'Failed to import CSV.'], Response::HTTP_INTERNAL_SERVER_ERROR);
+                }
+            }
         }
-
-        // Check if the uploaded file is a CSV
-        if ($uploadedFile->getClientOriginalExtension() !== 'csv') {
-            return $this->json(['message' => 'Invalid file format. Only CSV files are allowed.'], Response::HTTP_BAD_REQUEST);
-        }
-
-        $filePath = $uploadedFile->getPathname();
-        $chunkSize = 1024 * 1024; // 1MB chunk size
-        $batchSize = 100; // Adjust the batch size as needed
-
-        // Call the CSV import manager to handle the import
-        $importResult = $CSVImportManager->importCSV($filePath, $chunkSize, $batchSize);
-
-        if ($importResult === false) {
-            return $this->json(['message' => 'Failed to import CSV.'], Response::HTTP_INTERNAL_SERVER_ERROR);
-        }
-
         // Return a response indicating success
         return $this->json(['message' => 'CSV file uploaded and processed successfully.']);
     }
