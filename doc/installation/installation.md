@@ -12,6 +12,7 @@ Installation of the **Docker** project for **LBX** task locally.
   * [Creating Necessary Files](#creating-necessary-files)
   * [Launching Docker](#launching-docker)
   * [Installing Symfony Dependencies](#installing-symfony-dependencies)
+  * [Testing CSV Import](#testing-csv-import)
 <!-- TOC -->
 
 
@@ -47,6 +48,14 @@ docker exec -it [ID_DU_CONTENEUR] zsh
 - Install the dependencies
 ```shell
 composer install
+```
+
+## Testing CSV Import
+- To test the CSV import functionality, please follow these steps:
+1. Place the CSV file in the project's root directory.
+2. Execute the following command to initiate the CSV import:
+```shell
+curl -X POST -H 'Content-Type: multipart/form-data' -F "file=@import.csv" http://127.0.0.1:8001/api/employee
 ```
 
 [◄ Return to the first page](../../Readme.md)
